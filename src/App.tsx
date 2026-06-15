@@ -1,13 +1,35 @@
 import { useState } from "react";
+import type { CSSProperties } from "react";
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY as string;
 
 const LANGUAGES = ["JavaScript", "React/JSX", "TypeScript", "Python"];
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Review {
+  score: number;
+  issues: string[];
+  suggestions: string[];
+  good: string[];
+  summary: string;
+}
+
+interface ReviewSectionProps {
+  title: string;
+  items: string[];
+  color: string;
+  borderColor: string;
+  textColor: string;
+  titleColor: string;
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
+
 export default function App() {
   const [code, setCode] = useState("");
   const [lang, setLang] = useState("JavaScript");
-  const [review, setReview] = useState(null);
+  const [review, setReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,8 +79,8 @@ ${code}
       if (!jsonMatch) throw new Error("Could not parse response");
 
       setReview(JSON.parse(jsonMatch[0]));
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -71,9 +93,9 @@ ${code}
   }
 
   const scoreColor =
-    review?.score >= 80
+    (review?.score ?? 0) >= 80
       ? "#3B6D11"
-      : review?.score >= 50
+      : (review?.score ?? 0) >= 50
         ? "#854F0B"
         : "#A32D2D";
 
@@ -143,33 +165,28 @@ ${code}
           </div>
 
           <div style={styles.output}>
-            {/* Placeholder */}
             {!loading && !review && !error && (
               <div style={styles.placeholder}>
                 <p>← Your review will appear here</p>
               </div>
             )}
 
-            {/* Loading */}
             {loading && (
               <div style={styles.placeholder}>
                 <p>Analyzing your code...</p>
               </div>
             )}
 
-            {/* Error */}
             {error && (
               <div style={styles.errorBox}>
                 <strong>Error:</strong> {error}
               </div>
             )}
 
-            {/* Review */}
             {review && (
               <div>
                 <p style={styles.summary}>"{review.summary}"</p>
 
-                {/* Score bar */}
                 <div style={styles.scoreTrack}>
                   <div
                     style={{
@@ -221,6 +238,8 @@ ${code}
   );
 }
 
+// ── ReviewSection ─────────────────────────────────────────────────────────────
+
 function ReviewSection({
   title,
   items,
@@ -228,7 +247,7 @@ function ReviewSection({
   borderColor,
   textColor,
   titleColor,
-}) {
+}: ReviewSectionProps) {
   return (
     <div
       style={{
@@ -239,27 +258,12 @@ function ReviewSection({
         border: `0.5px solid ${borderColor}`,
       }}
     >
-      <p
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: titleColor,
-          marginBottom: 8,
-        }}
-      >
+      <p style={{ fontSize: 12, fontWeight: 600, color: titleColor, marginBottom: 8 }}>
         {title}
       </p>
       <ul style={{ paddingLeft: 16, margin: 0 }}>
         {items.map((item, i) => (
-          <li
-            key={i}
-            style={{
-              fontSize: 13,
-              lineHeight: 1.6,
-              color: textColor,
-              marginBottom: 4,
-            }}
-          >
+          <li key={i} style={{ fontSize: 13, lineHeight: 1.6, color: textColor, marginBottom: 4 }}>
             {item}
           </li>
         ))}
@@ -268,155 +272,33 @@ function ReviewSection({
   );
 }
 
-const styles = {
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const styles: Record<string, CSSProperties> = {
   app: {
     minHeight: "100vh",
     padding: "24px",
     background: "#f5f5f3",
     fontFamily: "system-ui, sans-serif",
   },
-  header: {
-    marginBottom: 20,
-  },
-  h1: {
-    fontSize: 20,
-    fontWeight: 600,
-    color: "#1a1a1a",
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  },
-  badge: {
-    fontSize: 11,
-    fontWeight: 500,
-    padding: "3px 8px",
-    borderRadius: 6,
-    background: "#EAF3DE",
-    color: "#3B6D11",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#888",
-    marginTop: 4,
-  },
-  layout: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 16,
-  },
-  panel: {
-    background: "#fff",
-    border: "0.5px solid #e0e0e0",
-    borderRadius: 12,
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-  },
-  panelHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "10px 14px",
-    borderBottom: "0.5px solid #e0e0e0",
-    background: "#fafafa",
-  },
-  panelTitle: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#999",
-    letterSpacing: "0.06em",
-  },
-  scoreBadge: {
-    fontSize: 13,
-    fontWeight: 600,
-  },
-  select: {
-    fontSize: 12,
-    padding: "4px 8px",
-    borderRadius: 6,
-    border: "0.5px solid #e0e0e0",
-    background: "#f5f5f3",
-    color: "#666",
-    cursor: "pointer",
-  },
-  textarea: {
-    flex: 1,
-    minHeight: 340,
-    padding: 14,
-    fontFamily: "monospace",
-    fontSize: 13,
-    lineHeight: 1.6,
-    color: "#1a1a1a",
-    background: "#fff",
-    border: "none",
-    resize: "vertical",
-    outline: "none",
-  },
-  actions: {
-    padding: "10px 14px",
-    borderTop: "0.5px solid #e0e0e0",
-    display: "flex",
-    gap: 8,
-    background: "#fafafa",
-  },
-  btnPrimary: {
-    fontSize: 13,
-    fontWeight: 500,
-    padding: "7px 16px",
-    borderRadius: 8,
-    border: "none",
-    background: "#1a1a1a",
-    color: "#fff",
-    cursor: "pointer",
-  },
-  btnSecondary: {
-    fontSize: 13,
-    padding: "7px 12px",
-    borderRadius: 8,
-    border: "0.5px solid #e0e0e0",
-    background: "transparent",
-    color: "#666",
-    cursor: "pointer",
-  },
-  output: {
-    flex: 1,
-    padding: 14,
-    overflowY: "auto",
-    minHeight: 340,
-  },
-  placeholder: {
-    height: 300,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#bbb",
-    fontSize: 13,
-  },
-  errorBox: {
-    padding: 12,
-    borderRadius: 8,
-    background: "#FCEBEB",
-    color: "#791F1F",
-    fontSize: 13,
-    border: "0.5px solid #F09595",
-  },
-  summary: {
-    fontSize: 13,
-    color: "#666",
-    fontStyle: "italic",
-    marginBottom: 12,
-    lineHeight: 1.6,
-  },
-  scoreTrack: {
-    height: 4,
-    background: "#eee",
-    borderRadius: 2,
-    marginBottom: 14,
-    overflow: "hidden",
-  },
-  scoreFill: {
-    height: "100%",
-    borderRadius: 2,
-    transition: "width 0.6s ease",
-  },
+  header: { marginBottom: 20 },
+  h1: { fontSize: 20, fontWeight: 600, color: "#1a1a1a", display: "flex", alignItems: "center", gap: 10 },
+  badge: { fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 6, background: "#EAF3DE", color: "#3B6D11" },
+  subtitle: { fontSize: 13, color: "#888", marginTop: 4 },
+  layout: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
+  panel: { background: "#fff", border: "0.5px solid #e0e0e0", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" },
+  panelHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "0.5px solid #e0e0e0", background: "#fafafa" },
+  panelTitle: { fontSize: 11, fontWeight: 600, color: "#999", letterSpacing: "0.06em" },
+  scoreBadge: { fontSize: 13, fontWeight: 600 },
+  select: { fontSize: 12, padding: "4px 8px", borderRadius: 6, border: "0.5px solid #e0e0e0", background: "#f5f5f3", color: "#666", cursor: "pointer" },
+  textarea: { flex: 1, minHeight: 340, padding: 14, fontFamily: "monospace", fontSize: 13, lineHeight: 1.6, color: "#1a1a1a", background: "#fff", border: "none", resize: "vertical", outline: "none" },
+  actions: { padding: "10px 14px", borderTop: "0.5px solid #e0e0e0", display: "flex", gap: 8, background: "#fafafa" },
+  btnPrimary: { fontSize: 13, fontWeight: 500, padding: "7px 16px", borderRadius: 8, border: "none", background: "#1a1a1a", color: "#fff", cursor: "pointer" },
+  btnSecondary: { fontSize: 13, padding: "7px 12px", borderRadius: 8, border: "0.5px solid #e0e0e0", background: "transparent", color: "#666", cursor: "pointer" },
+  output: { flex: 1, padding: 14, overflowY: "auto", minHeight: 340 },
+  placeholder: { height: 300, display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: 13 },
+  errorBox: { padding: 12, borderRadius: 8, background: "#FCEBEB", color: "#791F1F", fontSize: 13, border: "0.5px solid #F09595" },
+  summary: { fontSize: 13, color: "#666", fontStyle: "italic", marginBottom: 12, lineHeight: 1.6 },
+  scoreTrack: { height: 4, background: "#eee", borderRadius: 2, marginBottom: 14, overflow: "hidden" },
+  scoreFill: { height: "100%", borderRadius: 2, transition: "width 0.6s ease" },
 };
